@@ -35,10 +35,13 @@
   }
 
   function findAnswerBody(answer) {
-    return answer.querySelector(".markdown") ||
-      answer.querySelector('[class*="markdown"]') ||
-      answer.querySelector('[data-message-author-role="assistant"]') ||
-      answer;
+    const body = answer.querySelector(".markdown") ||
+      answer.querySelector('[class*="markdown"]');
+
+    // ChatGPT creates an empty assistant node before the answer starts streaming.
+    // Wait for real content so an unusable button is not shown under the user message.
+    if (!body || !body.textContent?.trim()) return null;
+    return body;
   }
 
   function applyVisibility() {

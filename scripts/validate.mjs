@@ -39,6 +39,16 @@ for (const relativePath of ["src/formatter.js", "src/content.js", "popup/popup.j
   }
 }
 
+const contentScript = await readFile(join(root, "src/content.js"), "utf8");
+assert(
+  /if \(!body \|\| !body\.textContent\?\.trim\(\)\) return null;/.test(contentScript),
+  "回答正文出现前不应显示复制按钮"
+);
+assert(
+  !/answer\.querySelector\(['"]\[data-message-author-role=[^\n]+\|\|\s*answer/.test(contentScript),
+  "不能把空的 assistant 占位节点当作回答正文"
+);
+
 const popupHtml = await readFile(join(root, "popup/popup.html"), "utf8");
 assert(!/<script(?![^>]*\bsrc=)/i.test(popupHtml), "弹窗不能使用内联脚本（Manifest V3 CSP）");
 assert(/<meta name="viewport"/i.test(popupHtml), "弹窗缺少 viewport 声明");

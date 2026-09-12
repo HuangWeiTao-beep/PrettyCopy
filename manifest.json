@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "PrettyCopy — AI 文本漂亮复制",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "将 ChatGPT 回答复制为干净的富文本、纯文本或 Markdown。",
   "permissions": [
     "clipboardWrite",
