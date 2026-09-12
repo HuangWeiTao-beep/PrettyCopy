@@ -1,0 +1,30 @@
+{
+  "manifest_version": 3,
+  "name": "PrettyCopy — AI 文本漂亮复制",
+  "version": "0.1.2",
+  "description": "将 ChatGPT 回答复制为干净的富文本、纯文本或 Markdown。",
+  "permissions": [
+    "clipboardWrite",
+    "storage"
+  ],
+  "action": {
+    "default_title": "PrettyCopy 设置",
+    "default_popup": "popup/popup.html"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://chatgpt.com/*",
+        "https://chat.openai.com/*"
+      ],
+      "js": [
+        "src/formatter.js",
+        "src/content.js"
+      ],
+      "css": [
+        "src/content.css"
+      ],
+      "run_at": "document_idle"
+    }
+  ]
+}

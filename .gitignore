@@ -1,0 +1,22 @@
+# Dependencies
+node_modules/
+
+# Build output and release archives
+dist/
+desktop/dist/
+
+# QA and local inspection output
+qa/
+*.docx
+*.pdf
+
+# Editor and OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini
+*.user
+*.suo
+*.tmp
+*.log

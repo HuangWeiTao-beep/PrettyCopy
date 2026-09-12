@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>PrettyCopy 设置</title>
+    <link rel="stylesheet" href="popup.css">
+  </head>
+  <body>
+    <main class="panel">
+      <header class="brand">
+        <div class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M8 7.5h8M8 11.5h6M8 15.5h4"></path><path d="M6 3.5h12a2 2 0 0 1 2 2v13a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-13a2 2 0 0 1 2-2Z"></path><path class="spark" d="m17.5 12 .55 1.45L19.5 14l-1.45.55L17.5 16l-.55-1.45L15.5 14l1.45-.55Z"></path></svg>
+        </div>
+        <div>
+          <h1>PrettyCopy</h1>
+          <p>复制内容，不复制 Markdown 的毛边。</p>
+        </div>
+      </header>
+
+      <section aria-labelledby="mode-title">
+        <div class="section-heading">
+          <h2 id="mode-title">默认复制格式</h2>
+          <span id="save-status" role="status" aria-live="polite">已保存</span>
+        </div>
+
+        <fieldset class="mode-list">
+          <legend class="sr-only">选择默认复制格式</legend>
+          <label class="mode-option">
+            <input type="radio" name="defaultMode" value="smart">
+            <span class="mode-copy">
+              <strong>智能格式</strong>
+              <small>Word、Notion、飞书自动保留排版</small>
+            </span>
+            <span class="radio-mark" aria-hidden="true"></span>
+          </label>
+
+          <label class="mode-option">
+            <input type="radio" name="defaultMode" value="plain">
+            <span class="mode-copy">
+              <strong>纯文本</strong>
+              <small>适合微信、邮件和记事本</small>
+            </span>
+            <span class="radio-mark" aria-hidden="true"></span>
+          </label>
+
+          <label class="mode-option">
+            <input type="radio" name="defaultMode" value="markdown">
+            <span class="mode-copy">
+              <strong>Markdown</strong>
+              <small>适合 Obsidian、GitHub 和代码编辑器</small>
+            </span>
+            <span class="radio-mark" aria-hidden="true"></span>
+          </label>
+        </fieldset>
+      </section>
+
+      <section class="preference" aria-labelledby="button-title">
+        <div>
+          <h2 id="button-title">显示回答旁按钮</h2>
+          <p>关闭后仍可从这里重新开启。</p>
+        </div>
+        <label class="switch">
+          <span class="sr-only">显示回答旁的漂亮复制按钮</span>
+          <input id="show-buttons" type="checkbox">
+          <span class="switch-track" aria-hidden="true"></span>
+        </label>
+      </section>
+
+      <footer>
+        <span class="privacy-dot" aria-hidden="true"></span>
+        内容只在当前页面处理，不上传。
+      </footer>
+    </main>
+    <script src="popup.js"></script>
+  </body>
+</html>

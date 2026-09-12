@@ -1,0 +1,28 @@
+name: Checks
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  browser-extension:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm run check
+
+  windows-desktop:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build
+        shell: powershell
+        run: .\desktop\build.ps1
+      - name: Run self-test
+        shell: powershell
+        run: |
+          & .\desktop\dist\PrettyCopyDesktop.exe --self-test
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
