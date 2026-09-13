@@ -24,5 +24,12 @@ jobs:
       - name: Run self-test
         shell: pwsh
         run: |
-          & .\desktop\dist\PrettyCopyDesktop.exe --self-test
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $process = Start-Process `
+            -FilePath .\desktop\dist\PrettyCopyDesktop.exe `
+            -ArgumentList '--self-test' `
+            -WindowStyle Hidden `
+            -Wait `
+            -PassThru
+          if ($process.ExitCode -ne 0) {
+            throw "Desktop self-test failed with exit code $($process.ExitCode)."
+          }
