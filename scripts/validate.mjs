@@ -48,6 +48,18 @@ assert(
   !/answer\.querySelector\(['"]\[data-message-author-role=[^\n]+\|\|\s*answer/.test(contentScript),
   "不能把空的 assistant 占位节点当作回答正文"
 );
+assert(
+  !/if \(answer\.dataset\.prettyCopyReady === ["']true["']\) return;/.test(contentScript),
+  "不能只依赖一次性标记判断复制按钮是否仍然存在"
+);
+assert(
+  /answer\.querySelectorAll\(['"]\[data-pretty-copy-ui=/.test(contentScript),
+  "回答重绘后必须检查并恢复实际存在的复制按钮"
+);
+assert(
+  contentScript.includes("复制当前内容") && /characterData:\s*true/.test(contentScript),
+  "流式回答变化时必须提示用户复制的是当前内容"
+);
 
 const popupHtml = await readFile(join(root, "popup/popup.html"), "utf8");
 assert(!/<script(?![^>]*\bsrc=)/i.test(popupHtml), "弹窗不能使用内联脚本（Manifest V3 CSP）");

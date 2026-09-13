@@ -12,9 +12,12 @@
     markdown: "Markdown"
   };
 
+  const STREAM_SETTLE_DELAY = 1200;
+
   let settings = { ...DEFAULT_SETTINGS };
   let scanQueued = false;
   const pendingAnswers = new Set();
+  const answerActivity = new WeakMap();
 
   function getStorage() {
     return chrome?.storage?.sync;
@@ -48,8 +51,9 @@
     document.documentElement.classList.toggle("pc-buttons-hidden", !settings.showButtons);
   }
 
-  function queueAnswer(answer) {
+  function queueAnswer(answer, markActive = false) {
     if (!answer) return;
+    if (markActive) noteAnswerActivity(answer);
     pendingAnswers.add(answer);
     if (scanQueued) return;
     scanQueued = true;
@@ -62,17 +66,46 @@
   }
 
   function scanDocument() {
-    findAnswers().forEach(queueAnswer);
+    findAnswers().forEach((answer) => queueAnswer(answer));
+  }
+
+  function noteAnswerActivity(answer) {
+    const state = answerActivity.get(answer) || { streaming: false, timer: null };
+    const wasStreaming = state.streaming;
+    state.streaming = true;
+    window.clearTimeout(state.timer);
+    state.timer = window.setTimeout(() => {
+      state.streaming = false;
+      state.timer = null;
+      syncAnswerControls(answer);
+    }, STREAM_SETTLE_DELAY);
+    answerActivity.set(answer, state);
+    if (!wasStreaming) syncAnswerControls(answer);
+  }
+
+  function isAnswerStreaming(answer) {
+    return answerActivity.get(answer)?.streaming === true;
   }
 
   function addCopyControls(answer) {
-    if (answer.dataset.prettyCopyReady === "true") return;
     const body = findAnswerBody(answer);
-    if (!body || body.querySelector(":scope > .pc-copy-ui")) return;
+    if (!body) return;
 
-    answer.dataset.prettyCopyReady = "true";
-    const controls = buildControls(body);
-    body.insertAdjacentElement("afterend", controls);
+    const controls = Array.from(answer.querySelectorAll('[data-pretty-copy-ui="true"]'));
+    const current = controls.find((control) => control.prettyCopyAnswerBody === body);
+    controls.forEach((control) => {
+      if (control !== current) control.remove();
+    });
+
+    if (current) {
+      syncAnswerControls(answer, current);
+      return;
+    }
+
+    const control = buildControls(body);
+    control.prettyCopyAnswerBody = body;
+    body.insertAdjacentElement("afterend", control);
+    syncAnswerControls(answer, control);
   }
 
   function buildControls(answerBody) {
@@ -83,8 +116,7 @@
     const mainButton = document.createElement("button");
     mainButton.type = "button";
     mainButton.className = "pc-copy-main";
-    mainButton.innerHTML = `${copyIcon()}<span>漂亮复制</span>`;
-    mainButton.setAttribute("aria-label", "按默认模式复制这条回答");
+    renderMainButton(mainButton);
     mainButton.addEventListener("click", async () => {
       await copyAnswer(answerBody, settings.defaultMode, mainButton);
     });
@@ -134,6 +166,32 @@
     return wrapper;
   }
 
+  function syncAnswerControls(answer, control = answer.querySelector(".pc-copy-ui")) {
+    if (!control) return;
+    const streaming = String(isAnswerStreaming(answer));
+    const changed = control.dataset.streaming !== streaming;
+    control.dataset.streaming = streaming;
+    const mainButton = control.querySelector(".pc-copy-main");
+    if (changed && mainButton && mainButton.dataset.feedbackActive !== "true") {
+      renderMainButton(mainButton);
+    }
+  }
+
+  function renderMainButton(button) {
+    const streaming = button.closest(".pc-copy-ui")?.dataset.streaming === "true";
+    const label = streaming ? "复制当前内容" : "漂亮复制";
+    const modeLabel = MODE_LABELS[settings.defaultMode] || MODE_LABELS.smart;
+    button.innerHTML = `${copyIcon()}<span>${label}</span>`;
+    button.setAttribute(
+      "aria-label",
+      streaming ? `回答仍在生成，以${modeLabel}复制当前内容` : `以${modeLabel}复制这条回答`
+    );
+  }
+
+  function refreshButtonLabels() {
+    document.querySelectorAll('.pc-copy-main:not([data-feedback-active="true"])').forEach(renderMainButton);
+  }
+
   function closeMenu(menu, button) {
     menu.hidden = true;
     button.setAttribute("aria-expanded", "false");
@@ -181,6 +239,8 @@
   }
 
   async function copyAnswer(answerBody, mode, feedbackButton) {
+    window.clearTimeout(feedbackButton.prettyCopyFeedbackTimer);
+    feedbackButton.dataset.feedbackActive = "true";
     feedbackButton.disabled = true;
     feedbackButton.classList.remove("is-success", "is-error");
     feedbackButton.innerHTML = `${spinnerIcon()}<span>处理中</span>`;
@@ -248,10 +308,11 @@
     button.classList.toggle("is-error", !success);
     button.title = success ? label : "请允许剪贴板权限后重试";
     button.innerHTML = `${success ? checkIcon() : alertIcon()}<span>${label}</span>`;
-    window.setTimeout(() => {
+    button.prettyCopyFeedbackTimer = window.setTimeout(() => {
       button.classList.remove("is-success", "is-error");
       button.removeAttribute("title");
-      button.innerHTML = `${copyIcon()}<span>漂亮复制</span>`;
+      delete button.dataset.feedbackActive;
+      renderMainButton(button);
     }, 1800);
   }
 
@@ -293,20 +354,29 @@
     if (changes.defaultMode) settings.defaultMode = changes.defaultMode.newValue;
     if (changes.showButtons) settings.showButtons = changes.showButtons.newValue;
     applyVisibility();
+    refreshButtonLabels();
   });
 
   const observer = new MutationObserver((mutations) => {
     mutations.forEach((mutation) => {
       const target = mutation.target.nodeType === Node.ELEMENT_NODE ? mutation.target : mutation.target.parentElement;
-      queueAnswer(target?.closest?.('[data-message-author-role="assistant"]'));
+      if (target?.closest?.(".pc-copy-ui")) return;
 
-      mutation.addedNodes.forEach((node) => {
+      const addedNodes = Array.from(mutation.addedNodes || []);
+      const onlyCopyUiWasAdded = addedNodes.length > 0 && addedNodes.every((node) =>
+        node.nodeType === Node.ELEMENT_NODE && node.matches?.(".pc-copy-ui")
+      );
+      if (onlyCopyUiWasAdded) return;
+
+      queueAnswer(target?.closest?.('[data-message-author-role="assistant"]'), true);
+
+      addedNodes.forEach((node) => {
         if (node.nodeType !== Node.ELEMENT_NODE) return;
         if (node.matches?.('[data-message-author-role="assistant"]')) queueAnswer(node);
-        node.querySelectorAll?.('[data-message-author-role="assistant"]').forEach(queueAnswer);
+        node.querySelectorAll?.('[data-message-author-role="assistant"]').forEach((answer) => queueAnswer(answer));
       });
     });
   });
-  observer.observe(document.documentElement, { childList: true, subtree: true });
+  observer.observe(document.documentElement, { childList: true, characterData: true, subtree: true });
   loadSettings().then(scanDocument);
 })();

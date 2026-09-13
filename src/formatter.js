@@ -31,10 +31,16 @@
   function normalizeWhitespace(text) {
     return text
       .replace(/\u00a0/g, " ")
-      .replace(/[ \t]+\n/g, "\n")
-      .replace(/\n[ \t]+/g, "\n")
+      .replace(/[ \t]+\n/g, (whitespace) => whitespace.endsWith("  \n") ? "  \n" : "\n")
       .replace(/\n{3,}/g, "\n\n")
       .trim();
+  }
+
+  function markdownCodeSpan(code) {
+    const longestRun = Math.max(0, ...Array.from(code.matchAll(/`+/g), (match) => match[0].length));
+    const fence = "`".repeat(longestRun + 1);
+    const padding = code.startsWith("`") || code.endsWith("`") ? " " : "";
+    return `${fence}${padding}${code}${padding}${fence}`;
   }
 
   function residualBoldSegments(text) {
@@ -179,9 +185,7 @@
     if (tag === "EM" || tag === "I") return `*${childText(element, serializeMarkdownNode, context)}*`;
     if (tag === "DEL" || tag === "S") return `~~${childText(element, serializeMarkdownNode, context)}~~`;
     if (tag === "CODE" && element.parentElement?.tagName !== "PRE") {
-      const code = element.textContent || "";
-      const fence = code.includes("`") ? "``" : "`";
-      return `${fence}${code}${fence}`;
+      return markdownCodeSpan(element.textContent || "");
     }
     if (tag === "PRE") return serializeMarkdownCodeBlock(element);
     if (tag === "BLOCKQUOTE") {
@@ -223,12 +227,14 @@
     return Array.from(list.children)
       .filter((child) => child.tagName === "LI")
       .map((item) => {
+        const checkbox = item.querySelector('input[type="checkbox"]');
         const nestedLists = Array.from(item.children).filter((child) =>
           child.tagName === "UL" || child.tagName === "OL"
         );
         const clone = item.cloneNode(true);
         clone.querySelectorAll(":scope > ul, :scope > ol").forEach((nested) => nested.remove());
-        const marker = ordered ? `${index++}. ` : "- ";
+        const checked = checkbox?.checked || checkbox?.hasAttribute("checked");
+        const marker = checkbox ? `- [${checked ? "x" : " "}] ` : (ordered ? `${index++}. ` : "- ");
         const content = normalizeWhitespace(childText(clone, serializeMarkdownNode, {}));
         const nested = nestedLists.map((child) => serializeMarkdownList(child, depth + 1)).join("");
         return `${"  ".repeat(depth)}${marker}${content}\n${nested}`;
@@ -317,9 +323,12 @@
     });
   }
 
-  function cleanClone(root) {
+  function cleanClone(root, options = {}) {
     const clone = root.cloneNode(true);
-    clone.querySelectorAll(REMOVED_SELECTORS).forEach((node) => node.remove());
+    clone.querySelectorAll(REMOVED_SELECTORS).forEach((node) => {
+      if (options.preserveCheckboxes && node.matches('input[type="checkbox"]')) return;
+      node.remove();
+    });
     return clone;
   }
 
@@ -357,7 +366,7 @@
   }
 
   function toMarkdown(root) {
-    return normalizeWhitespace(serializeMarkdownNode(cleanClone(root)));
+    return normalizeWhitespace(serializeMarkdownNode(cleanClone(root, { preserveCheckboxes: true })));
   }
 
   function toRichHtml(root) {
@@ -370,6 +379,8 @@
     toMarkdown,
     toRichHtml,
     __test: {
+      markdownCodeSpan,
+      normalizeWhitespace,
       residualBoldSegments,
       stripResidualMarkdown,
       stripResidualMarkdownInNode
