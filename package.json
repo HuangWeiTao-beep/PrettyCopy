@@ -1,8 +1,8 @@
 {
   "name": "prettycopy-extension",
-  "version": "0.1.4",
+  "version": "0.2.0",
   "private": true,
-  "description": "将 ChatGPT 回答复制为干净的富文本、纯文本或 Markdown。",
+  "description": "将任意 Markdown 或普通文本转换为干净的富文本、纯文本或 Markdown。",
   "scripts": {
     "check": "node scripts/validate.mjs && node scripts/formatter-unit.mjs"
   }

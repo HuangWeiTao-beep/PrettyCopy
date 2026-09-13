@@ -1,5 +1,7 @@
 # PrettyCopy Desktop
 
+> 此版本已停止维护，仅保留源码供参考和自行构建。当前项目只继续开发浏览器扩展。
+
 适用于 ChatGPT Desktop 和其他 Windows 桌面应用的便携剪贴板转换工具。
 
 当前版本使用 Windows 原生控件、系统配色和标准状态栏，可跟随系统 DPI 与高对比度设置。

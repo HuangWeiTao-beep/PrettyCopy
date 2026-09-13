@@ -3,75 +3,105 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>PrettyCopy 设置</title>
+    <title>PrettyCopy</title>
     <link rel="stylesheet" href="popup.css">
   </head>
   <body>
     <main class="panel">
       <header class="brand">
-        <div class="brand-mark" aria-hidden="true">
-          <svg viewBox="0 0 24 24"><path d="M8 7.5h8M8 11.5h6M8 15.5h4"></path><path d="M6 3.5h12a2 2 0 0 1 2 2v13a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-13a2 2 0 0 1 2-2Z"></path><path class="spark" d="m17.5 12 .55 1.45L19.5 14l-1.45.55L17.5 16l-.55-1.45L15.5 14l1.45-.55Z"></path></svg>
+        <div class="brand-lockup">
+          <div class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24">
+              <path d="M8 7.5h8M8 11.5h6M8 15.5h4"></path>
+              <path d="M6 3.5h12a2 2 0 0 1 2 2v13a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-13a2 2 0 0 1 2-2Z"></path>
+              <path class="spark" d="m17.5 12 .55 1.45L19.5 14l-1.45.55L17.5 16l-.55-1.45L15.5 14l1.45-.55Z"></path>
+            </svg>
+          </div>
+          <div>
+            <h1>PrettyCopy</h1>
+            <p>把毛糙文本，整理得体面一点。</p>
+          </div>
         </div>
-        <div>
-          <h1>PrettyCopy</h1>
-          <p>复制内容，不复制 Markdown 的毛边。</p>
-        </div>
+        <span class="privacy-pill" title="内容不会上传">
+          <span aria-hidden="true"></span>
+          本地处理
+        </span>
       </header>
 
-      <section aria-labelledby="mode-title">
+      <section class="workspace-section source-section" aria-labelledby="source-title">
         <div class="section-heading">
-          <h2 id="mode-title">默认复制格式</h2>
-          <span id="save-status" role="status" aria-live="polite">已保存</span>
+          <div class="section-title">
+            <span class="step" aria-hidden="true">1</span>
+            <h2 id="source-title">原文本</h2>
+          </div>
+          <div class="section-actions">
+            <span id="source-count" class="count" aria-hidden="true">0 字符</span>
+            <button id="clear-button" class="quiet-button" type="button" disabled>清空</button>
+          </div>
         </div>
-
-        <fieldset class="mode-list">
-          <legend class="sr-only">选择默认复制格式</legend>
-          <label class="mode-option">
-            <input type="radio" name="defaultMode" value="smart">
-            <span class="mode-copy">
-              <strong>智能格式</strong>
-              <small>Word、Notion、飞书自动保留排版</small>
-            </span>
-            <span class="radio-mark" aria-hidden="true"></span>
-          </label>
-
-          <label class="mode-option">
-            <input type="radio" name="defaultMode" value="plain">
-            <span class="mode-copy">
-              <strong>纯文本</strong>
-              <small>适合微信、邮件和记事本</small>
-            </span>
-            <span class="radio-mark" aria-hidden="true"></span>
-          </label>
-
-          <label class="mode-option">
-            <input type="radio" name="defaultMode" value="markdown">
-            <span class="mode-copy">
-              <strong>Markdown</strong>
-              <small>适合 Obsidian、GitHub 和代码编辑器</small>
-            </span>
-            <span class="radio-mark" aria-hidden="true"></span>
-          </label>
-        </fieldset>
+        <label class="sr-only" for="source-text">输入要转换的原文本</label>
+        <textarea
+          id="source-text"
+          spellcheck="false"
+          placeholder="在这里粘贴 Markdown 或普通文本…"
+          autofocus
+        ></textarea>
       </section>
 
-      <section class="preference" aria-labelledby="button-title">
-        <div>
-          <h2 id="button-title">显示回答旁按钮</h2>
-          <p>关闭后仍可从这里重新开启。</p>
+      <section class="workspace-section target-section" aria-labelledby="target-title">
+        <div class="section-heading">
+          <div class="section-title">
+            <span class="step" aria-hidden="true">2</span>
+            <div>
+              <h2 id="target-title">目标文本</h2>
+              <span id="output-status" class="output-status" role="status" aria-live="polite">等待输入</span>
+            </div>
+          </div>
+          <button id="copy-button" class="copy-button" type="button" disabled>
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <rect x="8" y="8" width="11" height="11" rx="2"></rect>
+              <path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"></path>
+            </svg>
+            <span>复制结果</span>
+          </button>
         </div>
-        <label class="switch">
-          <span class="sr-only">显示回答旁的漂亮复制按钮</span>
-          <input id="show-buttons" type="checkbox">
-          <span class="switch-track" aria-hidden="true"></span>
-        </label>
+
+        <fieldset class="mode-tabs">
+          <legend class="sr-only">选择转换模式</legend>
+          <label>
+            <input type="radio" name="defaultMode" value="smart">
+            <span>智能格式</span>
+          </label>
+          <label>
+            <input type="radio" name="defaultMode" value="plain">
+            <span>纯文本</span>
+          </label>
+          <label>
+            <input type="radio" name="defaultMode" value="markdown">
+            <span>Markdown</span>
+          </label>
+        </fieldset>
+
+        <div id="output-frame" class="output-frame is-empty">
+          <div class="empty-state" aria-hidden="true">
+            <svg viewBox="0 0 24 24">
+              <path d="M7 4h8l4 4v12H7z"></path>
+              <path d="M15 4v4h4M10 12h6M10 16h4"></path>
+            </svg>
+            <span>转换结果会出现在这里</span>
+          </div>
+          <article id="rich-output" class="rich-output" aria-label="智能格式预览" hidden></article>
+          <pre id="text-output" class="text-output" aria-label="转换结果" tabindex="0" hidden></pre>
+        </div>
       </section>
 
       <footer>
-        <span class="privacy-dot" aria-hidden="true"></span>
-        内容只在当前页面处理，不上传。
+        <span>正文不会保存或上传</span>
+        <span aria-hidden="true">·</span>
+        <span><kbd>Ctrl</kbd> + <kbd>Enter</kbd> 复制</span>
       </footer>
     </main>
+    <script src="../src/source-formatter.js"></script>
     <script src="popup.js"></script>
   </body>
 </html>
